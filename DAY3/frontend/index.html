@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DSA Chatbot 🤖</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #e0f7fa, #ffffff);
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+
+    .chat-container {
+      max-width: 600px;
+      margin: auto;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background: #f9f7f7;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      color: #007bff;
+      margin-top: 20px;
+    }
+
+    .chat-wrapper {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .chat-area {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .message {
+      margin-bottom: 16px;
+    }
+
+    .message strong {
+      color: #333;
+    }
+
+    .message .user {
+      color: #007bff;
+    }
+
+    .message .bot {
+      color: #28a745;
+    }
+
+    .input-area {
+      padding: 20px;
+      border-top: 1px solid #9ebce8;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    textarea {
+      resize: none;
+      height: 80px;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      width: 70%;
+    }
+
+    button {
+      padding: 12px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    pre {
+      background: #f8f8f8;
+      padding: 10px;
+      border-radius: 6px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="chat-container">
+    <h2>Rohit Chatbot</h2>
+    <div class="chat-wrapper" id="responseBox">
+      <div class="chat-area" id="chatArea"></div>
+    </div>
+    <div class="input-area">
+      <div>
+      <textarea id="userInput" placeholder="Ask a DSA question..."></textarea>
+        <button onclick="sendMessage()">Send</button>
+        <button onclick="startListening()">🎤 Speak</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+
+    function startListening() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.start();
+
+      recognition.onresult = function (event) {
+        const transcript = event.results[0][0].transcript;
+        document.getElementById('userInput').value = transcript;
+        sendMessage();
+      };
+
+      recognition.onerror = function (event) {
+        console.error('Speech recognition error', event.error);
+      };
+    }
+
+    async function sendMessage() {
+      const userInputElem = document.getElementById('userInput');
+      const chatArea = document.getElementById('chatArea');
+      const responseBox = document.getElementById('responseBox');
+      const userInput = userInputElem.value.trim();
+
+      if (!userInput) return;
+
+      // Display user's message
+      const userMsg = `<div class="message"><strong class="user">You:</strong> ${userInput}</div>`;
+      chatArea.innerHTML += userMsg;
+      userInputElem.value = '';
+
+      responseBox.scrollTop = responseBox.scrollHeight;
+
+      try {
+        const res = await fetch("http://localhost:3000/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: userInput })
+        });
+
+        const data = await res.json();
+
+        const botMsg = `<div class="message"><strong class="bot">Rohit Negi (Bot):</strong><br><pre>${data.reply}</pre></div>`;
+        chatArea.innerHTML += botMsg;
+        responseBox.scrollTop = responseBox.scrollHeight;
+      } catch (err) {
+        chatArea.innerHTML += `<div class="message bot"><strong>Error:</strong> Unable to get response from server.</div>`;
+      }
+    }
+  </script>
+</body>
+
+</html>
